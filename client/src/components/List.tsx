@@ -1,5 +1,12 @@
 import React, { useState } from "react";
 import { removeData, updateData } from "../api/todo";
+import ConfirmModal from "./Modal/ConfirmModal";
+import { toast } from "react-toastify";
+import {
+  MdOutlineEdit,
+  MdOutlineDeleteOutline,
+  MdOutlineCheck,
+} from "react-icons/md";
 
 interface TodoItem {
   id: number;
@@ -15,20 +22,43 @@ interface ListProps {
 const List: React.FC<ListProps> = ({ item, handleGetData }) => {
   const [isEdit, setIsEdit] = useState(false);
   const [title, setTitle] = useState(item.title);
+  const [originalTitle, setOriginalTitle] = useState(item.title); // ตั้งค่าตอนเริ่มแก้ไข
   const [status, setStatus] = useState(item.status);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedId, setSelectedId] = useState<number | null>(null);
 
   const handlerDelete = async (id: number) => {
     try {
       const res = await removeData(id);
       console.log(res);
       handleGetData();
+      toast.success(`Deleted ${res.data.deleted.title} Successfully`);
     } catch (err) {
       console.log(err);
+      toast.error(`Something went wrong ${err}`);
     }
   };
 
+  const openModal = (id: number) => {
+    setSelectedId(id);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setSelectedId(null);
+  };
+
+  const confirmDelete = () => {
+    if (selectedId !== null) {
+      handlerDelete(selectedId);
+    }
+    closeModal();
+  };
+
   const handlerEdit = () => {
-    setIsEdit(!isEdit);
+    setIsEdit(true); // เปิดโหมดแก้ไข
+    setOriginalTitle(title); // เก็บค่าเดิมของ title
   };
 
   const handleOnChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -36,12 +66,22 @@ const List: React.FC<ListProps> = ({ item, handleGetData }) => {
   };
 
   const handleConfirm = async (id: number) => {
-    setIsEdit(!isEdit);
+    if (title.trim() === "") {
+      toast.error("You can't change title to empty!");
+      setTitle(originalTitle); // คืนค่า title เดิมถ้าเป็นค่าว่าง
+      setIsEdit(false);
+      return;
+    }
+
     try {
       await updateData(id, { title, status });
       await handleGetData();
+      toast.success(`Edit "${title}" Successfully`);
     } catch (err) {
       console.log(err);
+      toast.error(`Something went wrong ${err}`);
+    } finally {
+      setIsEdit(false); // ปิดโหมดแก้ไข
     }
   };
 
@@ -49,38 +89,80 @@ const List: React.FC<ListProps> = ({ item, handleGetData }) => {
     try {
       const newStatus = !status;
       setStatus(newStatus);
-      await new Promise((resolve) => setTimeout(resolve, 300));
       await updateData(id, { title, status: newStatus });
       await handleGetData();
+      if (newStatus) {
+        toast.success(`Well done! You have completed "${title}"`);
+      } else {
+        toast.success(`"${title}" is marked as incomplete.`);
+      }
     } catch (err) {
       console.log(err);
+      toast.error(`Something went wrong ${err}`);
     }
   };
 
   return (
-    <div className={status ? "bg-green-500" : "bg-gray-500"}>
-      <div className="p-12">
-        {isEdit ? (
-          <input type="text" onChange={handleOnChange} value={title} />
-        ) : (
-          <span>{item.title}</span>
-        )}
-        {isEdit ? (
-          <button onClick={() => handleConfirm(item.id)}>Confirm</button>
-        ) : (
-          <button onClick={handlerEdit}>Edit</button>
-        )}
-        <button onClick={() => handlerDelete(item.id)}>Delete</button>
-
-        <label className="inline-flex items-center cursor-pointer">
-          <input
-            type="checkbox"
-            checked={status}
-            onChange={() => handleToggleStatus(item.id)}
-            className="sr-only peer"
-          />
-          <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-        </label>
+    <div className="max-w-screen-md mx-auto p-6">
+      <div
+        className={`${
+          status ? "bg-green-200" : "bg-blue-200"
+        } rounded-xl shadow-lg`}
+      >
+        <div className="flex justify-between p-4">
+          <div className="flex items-center">
+            {isEdit ? (
+              <input
+                className="p-2 rounded-xl"
+                type="text"
+                onChange={handleOnChange}
+                value={title}
+              />
+            ) : (
+              <h3 className="text-2xl font-sans">{item.title}</h3>
+            )}
+          </div>
+          <div className="flex gap-4">
+            {isEdit ? (
+              <button
+                className="bg-green-200 rounded-lg p-2 hover:bg-green-500 transition-all duration-200"
+                onClick={() => handleConfirm(item.id)}
+              >
+                <MdOutlineCheck className="text-3xl" />
+              </button>
+            ) : (
+              <button
+                className="bg-yellow-200 rounded-lg p-2 hover:bg-yellow-500 transition-all duration-200"
+                onClick={handlerEdit}
+              >
+                <MdOutlineEdit className="text-3xl" />
+              </button>
+            )}
+            <button
+              onClick={() => openModal(item.id)}
+              className="bg-red-200 rounded-lg p-2 hover:bg-red-500 transition-all duration-200"
+            >
+              <MdOutlineDeleteOutline className="text-3xl" />
+            </button>
+            <ConfirmModal
+              isOpen={isModalOpen}
+              onClose={closeModal}
+              onConfirm={confirmDelete}
+              message="Are you sure you want to delete this item?"
+            />
+          </div>
+        </div>
+        <div className="flex justify-start p-4">
+          <label className="inline-flex items-center cursor-pointer hover:scale-105 transition-all duration-200">
+            <input
+              type="checkbox"
+              checked={status}
+              onChange={() => handleToggleStatus(item.id)}
+              className="sr-only peer"
+            />
+            <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+          </label>
+        </div>
       </div>
     </div>
   );

@@ -3,7 +3,7 @@ const ENDPOINT = "http://localhost:5000/todo";
 
 export interface Body {
   title: string;
-  status: boolean; // เพิ่ม status
+  status: boolean;
 }
 
 export const getData = async () => await axios.get(ENDPOINT);
