@@ -57,9 +57,9 @@ const Todo = () => {
       <div>
         <h1 className="text-3xl font-bold">Todo List</h1>
       </div>
-      <div className="flex justify-center gap-6 my-6 ">
+      <div className="flex flex-col p-12 md:p-6 md:flex-row justify-center gap-4 my-4 md:gap-6 md:my-6">
         <input
-          className="p-2 border-black border-[1px] rounded-xl shadow-lg"
+          className="p-2 border-black border-[1px] rounded-xl shadow-lg max-w-full md:w-72"
           type="text"
           name="title"
           onChange={handleOnChange}

@@ -22,7 +22,7 @@ interface ListProps {
 const List: React.FC<ListProps> = ({ item, handleGetData }) => {
   const [isEdit, setIsEdit] = useState(false);
   const [title, setTitle] = useState(item.title);
-  const [originalTitle, setOriginalTitle] = useState(item.title); // ตั้งค่าตอนเริ่มแก้ไข
+  const [originalTitle, setOriginalTitle] = useState(item.title);
   const [status, setStatus] = useState(item.status);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<number | null>(null);
@@ -57,8 +57,8 @@ const List: React.FC<ListProps> = ({ item, handleGetData }) => {
   };
 
   const handlerEdit = () => {
-    setIsEdit(true); // เปิดโหมดแก้ไข
-    setOriginalTitle(title); // เก็บค่าเดิมของ title
+    setIsEdit(true);
+    setOriginalTitle(title);
   };
 
   const handleOnChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -68,7 +68,7 @@ const List: React.FC<ListProps> = ({ item, handleGetData }) => {
   const handleConfirm = async (id: number) => {
     if (title.trim() === "") {
       toast.error("You can't change title to empty!");
-      setTitle(originalTitle); // คืนค่า title เดิมถ้าเป็นค่าว่าง
+      setTitle(originalTitle);
       setIsEdit(false);
       return;
     }
@@ -81,7 +81,7 @@ const List: React.FC<ListProps> = ({ item, handleGetData }) => {
       console.log(err);
       toast.error(`Something went wrong ${err}`);
     } finally {
-      setIsEdit(false); // ปิดโหมดแก้ไข
+      setIsEdit(false);
     }
   };
 
@@ -109,8 +109,8 @@ const List: React.FC<ListProps> = ({ item, handleGetData }) => {
           status ? "bg-green-200" : "bg-blue-200"
         } rounded-xl shadow-lg`}
       >
-        <div className="flex justify-between p-4">
-          <div className="flex items-center">
+        <div className="flex justify-between gap-4 p-4 flex-col sm:flex-row">
+          <div className="flex items-center flex-wrap">
             {isEdit ? (
               <input
                 className="p-2 rounded-xl"
@@ -119,20 +119,22 @@ const List: React.FC<ListProps> = ({ item, handleGetData }) => {
                 value={title}
               />
             ) : (
-              <h3 className="text-2xl font-sans">{item.title}</h3>
+              <h3 className="text-2xl font-sans break-all text-start">
+                {item.title}
+              </h3>
             )}
           </div>
           <div className="flex gap-4">
             {isEdit ? (
               <button
-                className="bg-green-200 rounded-lg p-2 hover:bg-green-500 transition-all duration-200"
+                className="bg-green-200 rounded-lg p-2 hover:bg-green-500 transition-all duration-200 w-12 h-12"
                 onClick={() => handleConfirm(item.id)}
               >
                 <MdOutlineCheck className="text-3xl" />
               </button>
             ) : (
               <button
-                className="bg-yellow-200 rounded-lg p-2 hover:bg-yellow-500 transition-all duration-200"
+                className="bg-yellow-200 rounded-lg p-2 hover:bg-yellow-500 transition-all duration-200 w-12 h-12"
                 onClick={handlerEdit}
               >
                 <MdOutlineEdit className="text-3xl" />
@@ -140,7 +142,7 @@ const List: React.FC<ListProps> = ({ item, handleGetData }) => {
             )}
             <button
               onClick={() => openModal(item.id)}
-              className="bg-red-200 rounded-lg p-2 hover:bg-red-500 transition-all duration-200"
+              className="bg-red-200 rounded-lg p-2 hover:bg-red-500 transition-all duration-200 w-12 h-12"
             >
               <MdOutlineDeleteOutline className="text-3xl" />
             </button>
